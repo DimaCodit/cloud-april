@@ -6,6 +6,7 @@ public class FileMessage implements Serializable, Message {
     private int offset;
     private int ptr;
     private String name;
+    private String destinationPath;
 
     public FileMessage(String name, byte[] bytes, int offset, int ptr) {
         this.bytes = bytes;
@@ -24,6 +25,14 @@ public class FileMessage implements Serializable, Message {
 
     public int getPtr() {
         return ptr;
+    }
+
+    public String getDestinationPath() {
+        return destinationPath;
+    }
+
+    public void setDestinationPath(String destinationPath) {
+        this.destinationPath = destinationPath;
     }
 
     public String getName() {

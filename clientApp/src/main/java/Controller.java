@@ -65,7 +65,9 @@ public class Controller implements Initializable {
             }
             else {
                 try {
-                    network.sendFile(item);
+                    network.sendFile(item, currentStoragePath.getFullName());
+                    String fullNameFile = currentStoragePath.getFullName() + "\\" + item.getName();
+                    getStorageFile(currentStoragePath);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
