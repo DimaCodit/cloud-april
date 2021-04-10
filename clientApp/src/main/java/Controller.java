@@ -6,7 +6,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 
@@ -20,6 +19,7 @@ import java.util.ResourceBundle;
 public class Controller implements Initializable {
 
     private Network network;
+    private FileHandler fileHandler;
 
     @FXML
     TableView<File> filesTableView;
@@ -27,6 +27,15 @@ public class Controller implements Initializable {
     TableView<StorageFile> storageFilesTableView;
     @FXML
     ComboBox<File> discComboBox;
+    @FXML
+    MenuItem menuItemGetFromStorage;
+    @FXML
+    MenuItem menuItemSendToStorage;
+    @FXML
+    TableColumn<File, String> filesTableViewColumn;
+    @FXML
+    TableColumn<StorageFile, String> storageTableViewColumn;
+
 
     File currentFolder;
     StorageFile currentStoragePath;
@@ -34,63 +43,25 @@ public class Controller implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        ObservableList<File> olist = FXCollections.observableArrayList(File.listRoots());
+        fileHandler = new FileHandler();
 
-        filesTableView.setOnMouseClicked((MouseEvent event) -> {
-            if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2){
-                setPath(filesTableView.getSelectionModel().getSelectedItem());
+        initDiscComboBox();
+        initLocalFilesTable();
+        initStorageFilesTable();
+
+        network = new Network(m-> {
+            try {
+                processMessage(m);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         });
-
-        storageFilesTableView.setOnMouseClicked((MouseEvent event) -> {
-            if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2){
-                StorageFile file = storageFilesTableView.getSelectionModel().getSelectedItem();
-                getStorageFile(file);
-            }
-        });
-
-        discComboBox.setItems(olist);
-        discComboBox.setValue(olist.get(0));
-
-        TableColumn<File, String> col = new TableColumn("Файл");
-        col.setCellValueFactory(entry -> new SimpleObjectProperty<>(entry.getValue().getName()));
-
-        filesTableView.getColumns().add(col);
-
-        MenuItem sent = new MenuItem("Отправить в хранилище");
-        sent.setOnAction((ActionEvent event) -> {
-            File item = filesTableView.getSelectionModel().getSelectedItem();
-            if (item == null || !item.isFile()) {
-                return;
-            }
-            else {
-                try {
-                    network.sendFile(item, currentStoragePath.getFullName());
-                    String fullNameFile = currentStoragePath.getFullName() + "\\" + item.getName();
-                    getStorageFile(currentStoragePath);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-        });
-
-        ContextMenu menu = new ContextMenu();
-        menu.getItems().add(sent);
-        filesTableView.setContextMenu(menu);
-
-        TableColumn<StorageFile, String> storCol = new TableColumn("Файл");
-        storCol.setCellValueFactory(entry -> new SimpleObjectProperty<>(entry.getValue().getName()));
-
-        storageFilesTableView.getColumns().add(storCol);
-
-        network = new Network(m->processMessage(m));
 
     }
 
     private void getStorageFile(StorageFile storageFile) {
 
-        if (storageFile.isFile()) {
+        if (storageFile == null || storageFile.isFile()) {
             return;
         }
         else if (storageFile.getName() == "...") {
@@ -98,7 +69,7 @@ public class Controller implements Initializable {
         }
 
         if (storageFile != null) {
-            network.sendMessage(new RequestMessage(Action.GET_STORAGE_FILE, storageFile.getFullName()));
+            network.sendMessage(new RequestMessage(Action.GET_STORAGE_PATH, storageFile.getFullName()));
         }
     }
 
@@ -140,15 +111,82 @@ public class Controller implements Initializable {
         currentFolder = path;
     }
 
-    public void processMessage(Message storageFile) {
-        if (storageFile instanceof StorageFile) {
-            currentStoragePath = (StorageFile) storageFile;
+    public void processMessage(Message msg) throws IOException {
+        if (msg instanceof StorageFile) {
+            currentStoragePath = (StorageFile) msg;
             storageFilesTableView.getItems().clear();
-            if (currentStoragePath.getParent() != null) {
+            if (!currentStoragePath.getFullName().equals("/")) {
                 storageFilesTableView.getItems().add(new StorageFile("..."));
             }
             storageFilesTableView.getItems().addAll(currentStoragePath.listStorageFiles());
         }
+        else if (msg instanceof FileMessage) {
+            fileHandler.acceptFileMessage((FileMessage)msg, "");
+        }
+        else if (msg instanceof RequestMessage) {
+            RequestMessage reqMsg = (RequestMessage) msg;
+            if (reqMsg.getAction() == Action.CLOSE_FILE) {
+                fileHandler.closeFile((RequestMessage) msg);
+                setPath(currentFolder);
+            }
+        }
     }
 
+    private void initDiscComboBox() {
+        ObservableList<File> olist = FXCollections.observableArrayList(File.listRoots());
+
+        discComboBox.setItems(olist);
+        discComboBox.setValue(olist.get(0));
+    }
+
+    private void initLocalFilesTable() {
+        filesTableView.setOnMouseClicked((MouseEvent event) -> {
+            if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2){
+                setPath(filesTableView.getSelectionModel().getSelectedItem());
+            }
+        });
+
+        filesTableViewColumn.setCellValueFactory(entry -> new SimpleObjectProperty<>(entry.getValue().getName()));
+
+    }
+
+    private void initStorageFilesTable() {
+        storageFilesTableView.setOnMouseClicked((MouseEvent event) -> {
+            if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2){
+                StorageFile file = storageFilesTableView.getSelectionModel().getSelectedItem();
+                getStorageFile(file);
+            }
+        });
+
+        storageTableViewColumn.setCellValueFactory(entry -> new SimpleObjectProperty<>(entry.getValue().getName()));
+    }
+
+    public void getFromStorage(ActionEvent actionEvent) {
+
+        StorageFile item = storageFilesTableView.getSelectionModel().getSelectedItem();
+        if (item == null || !item.isFile()) {
+            return;
+        } else {
+            network.sendMessage(new RequestMessage(Action.GET_FILE_FROM_STORAGE, item.getFullName(), currentFolder.toString()));
+        }
+
+    }
+
+    public void sendToStorage(ActionEvent actionEvent) {
+
+        File item = filesTableView.getSelectionModel().getSelectedItem();
+        if (item == null || !item.isFile()) {
+            return;
+        }
+        else {
+            try {
+
+                fileHandler.sendFile(item.toString(), currentStoragePath.getFullName(), message -> network.sendMessage(message));
+                getStorageFile(currentStoragePath);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

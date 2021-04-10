@@ -55,27 +55,4 @@ public class Network {
         channel.writeAndFlush(ms);
     }
 
-    public void sendFile(File file, String destination) throws IOException {
-
-        RandomAccessFile raf = new RandomAccessFile(file, "rw");
-
-        int ptr = 0;
-        int offset = 0;
-        byte[] buf = new byte[524288];
-
-        String fileName = file.getName();
-
-        while((ptr = raf.read(buf)) != -1) {
-
-            FileMessage ms = new FileMessage(destination + "\\"+ fileName, buf, offset, ptr);
-            offset += ptr;
-
-            sendMessage(ms);
-
-        }
-
-        sendMessage(new RequestMessage(Action.CLOSE_FILE, destination + "\\"+ fileName));
-
-    }
-
 }

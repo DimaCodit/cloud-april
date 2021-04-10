@@ -1,14 +1,12 @@
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -17,6 +15,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
 
     public static ConcurrentHashMap<String, RandomAccessFile> activeFiles = new ConcurrentHashMap();
     public static String storagePath;
+    public static FileHandler fileHandler = new FileHandler();
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -35,32 +34,19 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof FileMessage) {
-            FileMessage fileMsg = (FileMessage) msg;
-            String fileName = fileMsg.getName();
-            RandomAccessFile rnfile = activeFiles.get(fileName);
-            if (rnfile == null) {
-                rnfile = new RandomAccessFile(storagePath + fileName, "rw");
-                activeFiles.put(fileName, rnfile);
-            }
-            rnfile.seek(fileMsg.getOffset());
-            rnfile.write(fileMsg.getBytes(),0, fileMsg.getPtr());
-
+            fileHandler.acceptFileMessage((FileMessage)msg, storagePath);
         }
         else if (msg instanceof RequestMessage) {
             RequestMessage reqMsg = (RequestMessage) msg;
             if (reqMsg.getAction() == Action.CLOSE_FILE) {
-                String fileName = reqMsg.getParam();
-                RandomAccessFile rnfile = activeFiles.get(fileName);
-                if (rnfile != null) {
-                    rnfile.close();
-                    activeFiles.remove(fileName);
-                }
+                fileHandler.closeFile((RequestMessage) msg);
             }
-            else if (reqMsg.getAction() == Action.GET_STORAGE_FILE) {
-
+            else if (reqMsg.getAction() == Action.GET_STORAGE_PATH) {
                 StorageFile rootPath = getStorageFile(reqMsg.getParam());
                 ctx.writeAndFlush(rootPath);
-
+            }
+            else if (reqMsg.getAction() == Action.GET_FILE_FROM_STORAGE) {
+                fileHandler.sendFile(storagePath + reqMsg.getParam(), reqMsg.getParam2(), message -> ctx.writeAndFlush(message) );
             }
         }
     }
@@ -80,7 +66,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         Path absolutePath = Paths.get(storagePath + relativePath);
 
         if (absolutePath.equals(Paths.get(storagePath))) {
-            parentPath = null;
+            parentPath = Paths.get(storagePath);
         }
         else {
             parentPath = absolutePath.getParent();
@@ -100,7 +86,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         StorageFile storageFile = new StorageFile( relativePath, relativePath, parentStorageFile, false, null);
 
         List<StorageFile> subFolders = Files.walk(absolutePath,1).map(p-> {
-            return new StorageFile(p.getFileName().toString(), absolutePath.relativize(p).toString(), storageFile, !Files.isDirectory(p), null);
+            return new StorageFile(p.getFileName().toString(), parentPath.relativize(p).toString(), storageFile, !Files.isDirectory(p), null);
         }).collect(Collectors.toList());
 
         subFolders.remove(0);

@@ -4,10 +4,17 @@ public class RequestMessage implements Serializable, Message {
 
     private Action action;
     private String param;
+    private String param2;
 
     public RequestMessage(Action action, String param) {
         this.action = action;
         this.param = param;
+    }
+
+    public RequestMessage(Action action, String param, String param2) {
+        this.action = action;
+        this.param = param;
+        this.param2 = param2;
     }
 
     public Action getAction() {
@@ -17,9 +24,15 @@ public class RequestMessage implements Serializable, Message {
     public String getParam() {
         return param;
     }
+
+    public String getParam2() {
+        return param2;
+    }
+
 }
 
 enum Action {
     CLOSE_FILE,
-    GET_STORAGE_FILE
+    GET_STORAGE_PATH,
+    GET_FILE_FROM_STORAGE,
 }

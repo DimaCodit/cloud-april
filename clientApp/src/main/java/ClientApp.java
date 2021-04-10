@@ -13,7 +13,7 @@ public class ClientApp extends Application {
         Controller controller = fxmlLoader.getController();
         primaryStage.setOnCloseRequest(event -> controller.exitAction());
         primaryStage.setTitle("April Cloud");
-        primaryStage.setScene(new Scene(root, 400, 400));
+        primaryStage.setScene(new Scene(root));
         primaryStage.show();
     }
 
