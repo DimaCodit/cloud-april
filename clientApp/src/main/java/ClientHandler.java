@@ -16,10 +16,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof StorageFile) {
-
-            onMessageReceivedCallback.callback((Message)msg);
-        }
+        onMessageReceivedCallback.callback((Message)msg);
     }
 
     public ClientHandler(Callback onMessageReceivedCallback) {
