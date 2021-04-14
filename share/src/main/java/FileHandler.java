@@ -1,7 +1,12 @@
-import java.io.File;
-import java.io.FileNotFoundException;
+import messages.Action;
+import messages.FileMessage;
+import messages.Message;
+import messages.RequestMessage;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -54,6 +59,11 @@ public class FileHandler {
             activeFiles.remove(fileName);
         }
 
+    }
+
+    public void renameFile(String fullNameFile,String newNameFile) throws IOException {
+        Path pathSource = Paths.get(fullNameFile);
+        Files.move(pathSource, Paths.get(newNameFile));
     }
 
 }

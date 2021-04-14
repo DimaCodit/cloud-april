@@ -8,12 +8,17 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import messages.Action;
+import messages.FileMessage;
+import messages.Message;
+import messages.RequestMessage;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
@@ -187,6 +192,24 @@ public class Controller implements Initializable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public void renameStorageFile(ActionEvent actionEvent) {
+        StorageFile item = storageFilesTableView.getSelectionModel().getSelectedItem();
+        if (item == null || !item.isFile()) {
+            return;
+        } else {
+            TextInputDialog dialog = new TextInputDialog(item.getName());
+            dialog.setTitle("Введите новое имя");
+            dialog.setHeaderText("Enter your name:");
+
+            Optional<String> result = dialog.showAndWait();
+
+            result.ifPresent(newName -> {
+                network.sendMessage(new RequestMessage(Action.RENAME_FILE_IN_STORAGE, item.getFullName(), newName));
+            });
+
         }
     }
 }

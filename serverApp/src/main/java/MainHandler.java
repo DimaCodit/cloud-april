@@ -1,5 +1,8 @@
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import messages.Action;
+import messages.FileMessage;
+import messages.RequestMessage;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -20,11 +23,8 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("Client connected.");
-
         StorageFile rootPath = getStorageFile("/");
-
         ctx.writeAndFlush(rootPath);
-
     }
 
     public MainHandler(String storagePath) {
@@ -38,15 +38,22 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         }
         else if (msg instanceof RequestMessage) {
             RequestMessage reqMsg = (RequestMessage) msg;
-            if (reqMsg.getAction() == Action.CLOSE_FILE) {
+            Action action = reqMsg.getAction();
+            if (action == Action.CLOSE_FILE) {
                 fileHandler.closeFile((RequestMessage) msg);
             }
-            else if (reqMsg.getAction() == Action.GET_STORAGE_PATH) {
+            else if (action == Action.GET_STORAGE_PATH) {
                 StorageFile rootPath = getStorageFile(reqMsg.getParam());
                 ctx.writeAndFlush(rootPath);
             }
-            else if (reqMsg.getAction() == Action.GET_FILE_FROM_STORAGE) {
+            else if (action == Action.GET_FILE_FROM_STORAGE) {
                 fileHandler.sendFile(storagePath + reqMsg.getParam(), reqMsg.getParam2(), message -> ctx.writeAndFlush(message) );
+            }
+            else if (action == Action.RENAME_FILE_IN_STORAGE) {
+                String parentPath = Paths.get(storagePath + reqMsg.getParam()).getParent().toString();
+                fileHandler.renameFile(storagePath + reqMsg.getParam(), parentPath + "\\" + reqMsg.getParam2());
+                StorageFile storageFile = getStorageFile(Paths.get(storagePath).relativize(Paths.get(parentPath)).toString());
+                ctx.writeAndFlush(storageFile);
             }
         }
     }

@@ -52,6 +52,7 @@
                             <ContextMenu>
                                 <items>
                                     <MenuItem fx:id="menuItemGetFromStorage" onAction="#getFromStorage" mnemonicParsing="false" text="Получить из хранилища" />
+                                    <MenuItem fx:id="menuItemRenameStorageFile" onAction="#renameStorageFile" mnemonicParsing="false" text="Переименовать" />
                                 </items>
                             </ContextMenu>
                             </contextMenu>

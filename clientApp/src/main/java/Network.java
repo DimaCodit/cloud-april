@@ -7,13 +7,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
-import javafx.application.Platform;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import messages.Message;
 
 public class Network {
     private SocketChannel channel;
