@@ -1,3 +1,5 @@
+import messages.Message;
+
 import java.io.Serializable;
 import java.util.List;
 

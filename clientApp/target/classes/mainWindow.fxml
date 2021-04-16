@@ -11,6 +11,9 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.TreeTableView?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ContextMenu?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.TableColumn?>
 <AnchorPane fx:controller="Controller" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="534.0" prefWidth="728.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
     <children>
         <HBox layoutX="121.0" layoutY="97.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
@@ -26,6 +29,16 @@
                             <VBox.margin>
                                 <Insets left="10.0" top="10.0" />
                             </VBox.margin>
+                            <contextMenu>
+                                <ContextMenu>
+                                    <items>
+                                        <MenuItem fx:id="menuItemSendToStorage" onAction="#sendToStorage" mnemonicParsing="false" text="Отправить в хранилище" />
+                                    </items>
+                                </ContextMenu>
+                            </contextMenu>
+                            <columns>
+                                <TableColumn fx:id="filesTableViewColumn" prefWidth="344.0" text="Локальные файлы" />
+                            </columns>
                         </TableView>
                     </children>
                 </VBox>
@@ -35,6 +48,18 @@
                             <VBox.margin>
                                 <Insets left="10.0" top="45.0" />
                             </VBox.margin>
+                            <contextMenu>
+                            <ContextMenu>
+                                <items>
+                                    <MenuItem fx:id="menuItemGetFromStorage" onAction="#getFromStorage" mnemonicParsing="false" text="Получить из хранилища" />
+                                    <MenuItem fx:id="menuItemRenameStorageFile" onAction="#renameStorageFile" mnemonicParsing="false" text="Переименовать" />
+                                    <MenuItem fx:id="menuItemDeleteStorageFile" onAction="#deleteStorageFile" mnemonicParsing="false" text="Удалить" />
+                                </items>
+                            </ContextMenu>
+                            </contextMenu>
+                            <columns>
+                                <TableColumn fx:id="storageTableViewColumn" prefWidth="344.0" text="Файлы хранилища" />
+                            </columns>
                         </TableView>
                     </children>
                 </VBox>
