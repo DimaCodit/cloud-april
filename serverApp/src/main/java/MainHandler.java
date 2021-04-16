@@ -55,6 +55,12 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 StorageFile storageFile = getStorageFile(Paths.get(storagePath).relativize(Paths.get(parentPath)).toString());
                 ctx.writeAndFlush(storageFile);
             }
+            else if (action == Action.DELETE_FILE_IN_STORAGE) {
+                fileHandler.deleteFile(storagePath + reqMsg.getParam(), message -> ctx.writeAndFlush(message));
+                String parentPath = Paths.get(storagePath + reqMsg.getParam()).getParent().toString();
+                StorageFile storageFile = getStorageFile(Paths.get(storagePath).relativize(Paths.get(parentPath)).toString());
+                ctx.writeAndFlush(storageFile);
+            }
         }
     }
 

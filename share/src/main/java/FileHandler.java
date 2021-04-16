@@ -66,4 +66,10 @@ public class FileHandler {
         Files.move(pathSource, Paths.get(newNameFile));
     }
 
+    public void deleteFile(String fileName, Consumer<Message> messageSender) throws IOException {
+
+        Files.delete(Paths.get(fileName));
+
+    }
+
 }

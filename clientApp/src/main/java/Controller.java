@@ -69,7 +69,7 @@ public class Controller implements Initializable {
         if (storageFile == null || storageFile.isFile()) {
             return;
         }
-        else if (storageFile.getName() == "...") {
+        else if (storageFile.getName().equals("...")) {
             storageFile = currentStoragePath.getParent();
         }
 
@@ -102,7 +102,7 @@ public class Controller implements Initializable {
         if (path == null || !path.isDirectory()) {
             return;
         }
-        if (path.getName() == "...") {
+        if (path.getName().equals("...")) {
             setPath(currentFolder.getParentFile());
             return;
         }
@@ -211,5 +211,24 @@ public class Controller implements Initializable {
             });
 
         }
+    }
+
+    public void deleteStorageFile(ActionEvent actionEvent) {
+
+        StorageFile item = storageFilesTableView.getSelectionModel().getSelectedItem();
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Удаление");
+        alert.setContentText("Удалить файл " + item.getName());
+        ButtonType okButton = new ButtonType("Да", ButtonBar.ButtonData.YES);
+        ButtonType noButton = new ButtonType("Нет", ButtonBar.ButtonData.NO);
+
+        alert.getButtonTypes().setAll(okButton, noButton);
+
+        alert.showAndWait().ifPresent(type -> {
+            if (type.getButtonData().equals(ButtonBar.ButtonData.YES)) {
+                network.sendMessage(new RequestMessage(Action.DELETE_FILE_IN_STORAGE, item.getFullName()));
+            }
+        });
     }
 }
